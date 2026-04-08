@@ -242,6 +242,24 @@ public class SockudoTest {
     }
 
     @Test
+    public void getChannelHistory() throws Exception {
+        context.checking(new Expectations() {{
+            oneOf(httpClient).execute(with(path("/apps/" + APP_ID + "/channels/history-room/history")));
+        }});
+
+        p.getChannelHistory("history-room");
+    }
+
+    @Test
+    public void getChannelHistoryWithParams() throws Exception {
+        context.checking(new Expectations() {{
+            oneOf(httpClient).execute(with(path("/apps/" + APP_ID + "/channels/history-room/history")));
+        }});
+
+        p.getChannelHistory("history-room", Collections.singletonMap("direction", "newest_first"));
+    }
+
+    @Test
     public void testTriggerOnEncryptedChannel() throws IOException {
         final Sockudo pe = new Sockudo(APP_ID, KEY, SECRET, VALID_MASTER_KEY);
         configureHttpClient(pe);

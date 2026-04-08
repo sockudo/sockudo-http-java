@@ -512,6 +512,30 @@ public abstract class SockudoAbstract<T> {
         return doGet(uri);
     }
 
+    /**
+     * Fetch durable history for a specific channel.
+     *
+     * @param channelName the channel to query
+     * @param parameters history query parameters such as limit, direction, cursor,
+     *                   start_serial, end_serial, start_time_ms, end_time_ms
+     * @return a {@link Result} object encapsulating the success state and response
+     */
+    public T getChannelHistory(final String channelName, final Map<String, String> parameters) {
+        Prerequisites.nonEmpty("channelName", channelName);
+        Prerequisites.isValidChannel(channelName);
+        return get("/channels/" + channelName + "/history", parameters);
+    }
+
+    /**
+     * Fetch durable history for a specific channel without additional query parameters.
+     *
+     * @param channelName the channel to query
+     * @return a {@link Result} object encapsulating the success state and response
+     */
+    public T getChannelHistory(final String channelName) {
+        return getChannelHistory(channelName, Collections.<String, String>emptyMap());
+    }
+
     protected abstract T doGet(final URI uri);
 
     /**

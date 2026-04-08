@@ -273,6 +273,20 @@ This library supports end-to-end encryption of private channels. Only you and yo
 
 **Note:** A single `trigger` call cannot target both encrypted and unencrypted channels simultaneously.
 
+### Channel history
+
+```java
+Map<String, String> params = new HashMap<>();
+params.put("limit", "50");
+params.put("direction", "newest_first");
+
+Result page = sockudo.getChannelHistory("my-channel", params);
+Result nextPage = sockudo.getChannelHistory(
+    "my-channel",
+    Collections.singletonMap("cursor", "opaque-cursor-from-previous-page")
+);
+```
+
 ## License
 
 This code is free to use under the terms of the MIT license.
