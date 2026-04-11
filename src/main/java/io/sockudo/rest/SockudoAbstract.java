@@ -536,6 +536,53 @@ public abstract class SockudoAbstract<T> {
         return getChannelHistory(channelName, Collections.<String, String>emptyMap());
     }
 
+    /**
+     * Fetch presence history for a specific presence channel.
+     *
+     * @param channelName the presence channel to query
+     * @param parameters presence history query parameters such as limit, direction, cursor,
+     *                   start_serial, end_serial, start_time_ms, end_time_ms
+     * @return a {@link Result} object encapsulating the success state and response
+     */
+    public T getChannelPresenceHistory(final String channelName, final Map<String, String> parameters) {
+        Prerequisites.nonEmpty("channelName", channelName);
+        Prerequisites.isValidChannel(channelName);
+        return get("/channels/" + channelName + "/presence/history", parameters);
+    }
+
+    /**
+     * Fetch presence history for a specific presence channel without additional query parameters.
+     *
+     * @param channelName the presence channel to query
+     * @return a {@link Result} object encapsulating the success state and response
+     */
+    public T getChannelPresenceHistory(final String channelName) {
+        return getChannelPresenceHistory(channelName, Collections.<String, String>emptyMap());
+    }
+
+    /**
+     * Fetch a reconstructed presence snapshot for a specific presence channel.
+     *
+     * @param channelName the presence channel to query
+     * @param parameters snapshot query parameters such as at_time_ms or at_serial
+     * @return a {@link Result} object encapsulating the success state and response
+     */
+    public T getChannelPresenceSnapshot(final String channelName, final Map<String, String> parameters) {
+        Prerequisites.nonEmpty("channelName", channelName);
+        Prerequisites.isValidChannel(channelName);
+        return get("/channels/" + channelName + "/presence/history/snapshot", parameters);
+    }
+
+    /**
+     * Fetch a reconstructed presence snapshot for a specific presence channel without additional query parameters.
+     *
+     * @param channelName the presence channel to query
+     * @return a {@link Result} object encapsulating the success state and response
+     */
+    public T getChannelPresenceSnapshot(final String channelName) {
+        return getChannelPresenceSnapshot(channelName, Collections.<String, String>emptyMap());
+    }
+
     protected abstract T doGet(final URI uri);
 
     /**

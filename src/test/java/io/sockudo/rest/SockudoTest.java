@@ -260,6 +260,42 @@ public class SockudoTest {
     }
 
     @Test
+    public void getChannelPresenceHistory() throws Exception {
+        context.checking(new Expectations() {{
+            oneOf(httpClient).execute(with(path("/apps/" + APP_ID + "/channels/presence-room/presence/history")));
+        }});
+
+        p.getChannelPresenceHistory("presence-room");
+    }
+
+    @Test
+    public void getChannelPresenceHistoryWithParams() throws Exception {
+        context.checking(new Expectations() {{
+            oneOf(httpClient).execute(with(path("/apps/" + APP_ID + "/channels/presence-room/presence/history")));
+        }});
+
+        p.getChannelPresenceHistory("presence-room", Collections.singletonMap("direction", "newest_first"));
+    }
+
+    @Test
+    public void getChannelPresenceSnapshot() throws Exception {
+        context.checking(new Expectations() {{
+            oneOf(httpClient).execute(with(path("/apps/" + APP_ID + "/channels/presence-room/presence/history/snapshot")));
+        }});
+
+        p.getChannelPresenceSnapshot("presence-room");
+    }
+
+    @Test
+    public void getChannelPresenceSnapshotWithParams() throws Exception {
+        context.checking(new Expectations() {{
+            oneOf(httpClient).execute(with(path("/apps/" + APP_ID + "/channels/presence-room/presence/history/snapshot")));
+        }});
+
+        p.getChannelPresenceSnapshot("presence-room", Collections.singletonMap("at_serial", "4"));
+    }
+
+    @Test
     public void testTriggerOnEncryptedChannel() throws IOException {
         final Sockudo pe = new Sockudo(APP_ID, KEY, SECRET, VALID_MASTER_KEY);
         configureHttpClient(pe);

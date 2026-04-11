@@ -287,6 +287,25 @@ Result nextPage = sockudo.getChannelHistory(
 );
 ```
 
+### Presence history
+
+```java
+Map<String, String> params = new HashMap<>();
+params.put("limit", "50");
+params.put("direction", "newest_first");
+
+Result page = sockudo.getChannelPresenceHistory("presence-room", params);
+Result nextPage = sockudo.getChannelPresenceHistory(
+    "presence-room",
+    Collections.singletonMap("cursor", "opaque-cursor-from-previous-page")
+);
+
+Result snapshot = sockudo.getChannelPresenceSnapshot(
+    "presence-room",
+    Collections.singletonMap("at_serial", "4")
+);
+```
+
 ## License
 
 This code is free to use under the terms of the MIT license.
