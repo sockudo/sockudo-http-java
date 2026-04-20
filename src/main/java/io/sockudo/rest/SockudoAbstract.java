@@ -537,6 +537,87 @@ public abstract class SockudoAbstract<T> {
     }
 
     /**
+     * Fetch the latest visible version of a mutable message.
+     *
+     * @param channelName the channel to query
+     * @param messageSerial the stable serial of the target message
+     * @return a {@link Result} object encapsulating the success state and response
+     */
+    public T getMessage(final String channelName, final String messageSerial) {
+        Prerequisites.nonEmpty("channelName", channelName);
+        Prerequisites.isValidChannel(channelName);
+        Prerequisites.nonEmpty("messageSerial", messageSerial);
+        return get("/channels/" + channelName + "/messages/" + messageSerial, Collections.<String, String>emptyMap());
+    }
+
+    /**
+     * Fetch preserved versions of a mutable message.
+     *
+     * @param channelName the channel to query
+     * @param messageSerial the stable serial of the target message
+     * @param parameters versions query parameters such as limit, direction and cursor
+     * @return a {@link Result} object encapsulating the success state and response
+     */
+    public T getMessageVersions(final String channelName, final String messageSerial, final Map<String, String> parameters) {
+        Prerequisites.nonEmpty("channelName", channelName);
+        Prerequisites.isValidChannel(channelName);
+        Prerequisites.nonEmpty("messageSerial", messageSerial);
+        return get("/channels/" + channelName + "/messages/" + messageSerial + "/versions", parameters);
+    }
+
+    /**
+     * Fetch preserved versions of a mutable message without additional query parameters.
+     */
+    public T getMessageVersions(final String channelName, final String messageSerial) {
+        return getMessageVersions(channelName, messageSerial, Collections.<String, String>emptyMap());
+    }
+
+    /**
+     * Apply a mutable-message update.
+     *
+     * @param channelName the channel to query
+     * @param messageSerial the stable serial of the target message
+     * @param body the request payload
+     * @return a {@link Result} object encapsulating the success state and response
+     */
+    public T updateMessage(final String channelName, final String messageSerial, final String body) {
+        Prerequisites.nonEmpty("channelName", channelName);
+        Prerequisites.isValidChannel(channelName);
+        Prerequisites.nonEmpty("messageSerial", messageSerial);
+        return post("/channels/" + channelName + "/messages/" + messageSerial + "/update", body);
+    }
+
+    /**
+     * Apply a mutable-message delete.
+     *
+     * @param channelName the channel to query
+     * @param messageSerial the stable serial of the target message
+     * @param body the request payload
+     * @return a {@link Result} object encapsulating the success state and response
+     */
+    public T deleteMessage(final String channelName, final String messageSerial, final String body) {
+        Prerequisites.nonEmpty("channelName", channelName);
+        Prerequisites.isValidChannel(channelName);
+        Prerequisites.nonEmpty("messageSerial", messageSerial);
+        return post("/channels/" + channelName + "/messages/" + messageSerial + "/delete", body);
+    }
+
+    /**
+     * Apply a mutable-message append.
+     *
+     * @param channelName the channel to query
+     * @param messageSerial the stable serial of the target message
+     * @param body the request payload
+     * @return a {@link Result} object encapsulating the success state and response
+     */
+    public T appendMessage(final String channelName, final String messageSerial, final String body) {
+        Prerequisites.nonEmpty("channelName", channelName);
+        Prerequisites.isValidChannel(channelName);
+        Prerequisites.nonEmpty("messageSerial", messageSerial);
+        return post("/channels/" + channelName + "/messages/" + messageSerial + "/append", body);
+    }
+
+    /**
      * Fetch presence history for a specific presence channel.
      *
      * @param channelName the presence channel to query
