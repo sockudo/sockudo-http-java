@@ -140,6 +140,15 @@ public class SockudoAsync extends SockudoAbstract<CompletableFuture<Result>> imp
     }
 
     @Override
+    protected CompletableFuture<Result> doDelete(final URI uri) {
+        final Request request = new RequestBuilder(HttpConstants.Methods.DELETE)
+            .setUrl(uri.toString())
+            .build();
+
+        return httpCall(request);
+    }
+
+    @Override
     protected CompletableFuture<Result> doPost(final URI uri, final String body) {
         final Request request = new RequestBuilder(HttpConstants.Methods.POST)
                 .setUrl(uri.toString())

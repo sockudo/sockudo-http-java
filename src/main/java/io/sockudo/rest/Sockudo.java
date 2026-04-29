@@ -4,6 +4,7 @@ import io.sockudo.rest.data.Result;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
@@ -166,6 +167,11 @@ public class Sockudo extends SockudoAbstract<Result> implements AutoCloseable {
     @Override
     protected Result doGet(final URI uri) {
         return httpCall(new HttpGet(uri));
+    }
+
+    @Override
+    protected Result doDelete(final URI uri) {
+        return httpCall(new HttpDelete(uri));
     }
 
     @Override
