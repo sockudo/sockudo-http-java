@@ -618,6 +618,45 @@ public abstract class SockudoAbstract<T> {
     }
 
     /**
+     * Publish an annotation for a versioned message.
+     */
+    public T publishAnnotation(final String channelName, final String messageSerial, final String body) {
+        Prerequisites.nonEmpty("channelName", channelName);
+        Prerequisites.isValidChannel(channelName);
+        Prerequisites.nonEmpty("messageSerial", messageSerial);
+        return post("/channels/" + channelName + "/messages/" + messageSerial + "/annotations", body);
+    }
+
+    /**
+     * Delete an annotation from a versioned message.
+     */
+    public T deleteAnnotation(final String channelName, final String messageSerial, final String annotationSerial, final Map<String, String> parameters) {
+        Prerequisites.nonEmpty("channelName", channelName);
+        Prerequisites.isValidChannel(channelName);
+        Prerequisites.nonEmpty("messageSerial", messageSerial);
+        Prerequisites.nonEmpty("annotationSerial", annotationSerial);
+        return delete("/channels/" + channelName + "/messages/" + messageSerial + "/annotations/" + annotationSerial, parameters);
+    }
+
+    public T deleteAnnotation(final String channelName, final String messageSerial, final String annotationSerial) {
+        return deleteAnnotation(channelName, messageSerial, annotationSerial, Collections.<String, String>emptyMap());
+    }
+
+    /**
+     * List raw annotation events for a versioned message.
+     */
+    public T listAnnotations(final String channelName, final String messageSerial, final Map<String, String> parameters) {
+        Prerequisites.nonEmpty("channelName", channelName);
+        Prerequisites.isValidChannel(channelName);
+        Prerequisites.nonEmpty("messageSerial", messageSerial);
+        return get("/channels/" + channelName + "/messages/" + messageSerial + "/annotations", parameters);
+    }
+
+    public T listAnnotations(final String channelName, final String messageSerial) {
+        return listAnnotations(channelName, messageSerial, Collections.<String, String>emptyMap());
+    }
+
+    /**
      * Fetch presence history for a specific presence channel.
      *
      * @param channelName the presence channel to query
@@ -665,6 +704,15 @@ public abstract class SockudoAbstract<T> {
     }
 
     protected abstract T doGet(final URI uri);
+
+    public T delete(final String path, final Map<String, String> parameters) {
+        final String fullPath = "/apps/" + appId + path;
+        final URI uri = SignatureUtil.uri("DELETE", scheme, host, fullPath, null, key, secret, parameters);
+
+        return doDelete(uri);
+    }
+
+    protected abstract T doDelete(final URI uri);
 
     /**
      * Make a generic HTTP call to the Sockudo API.

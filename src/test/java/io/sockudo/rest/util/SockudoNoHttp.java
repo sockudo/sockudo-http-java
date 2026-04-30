@@ -20,6 +20,11 @@ public class SockudoNoHttp extends SockudoAbstract<Object> {
     }
 
     @Override
+    protected Object doDelete(final URI uri) {
+        throw new IllegalStateException("Shouldn't have been called, HTTP level not implemented");
+    }
+
+    @Override
     protected Object doPost(final URI uri, final String body) {
         throw new IllegalStateException("Shouldn't have been called, HTTP level not implemented");
     }
