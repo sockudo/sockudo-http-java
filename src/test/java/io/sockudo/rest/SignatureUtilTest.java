@@ -18,7 +18,7 @@ public class SignatureUtilTest {
                 is("POST\n/a/path\nk=v"));
 
         assertThat(SignatureUtil.buildSignatureString("GET", "/a/nother/path", Collections.singletonMap("K", "V")),
-                is("GET\n/a/nother/path\nK=V"));
+                is("GET\n/a/nother/path\nk=V"));
     }
 
     @Test
@@ -37,6 +37,16 @@ public class SignatureUtilTest {
 
         String toSign = SignatureUtil.buildSignatureString("POST", "/", params);
         assertThat(toSign, containsString("a=v1&car=v2&cat=v3&zat=v4"));
+    }
+
+    @Test
+    public void stringToSignLowercasesQueryKeysForSockudoVerification() {
+        Map<String, String> params = new LinkedHashMap<String, String>();
+        params.put("deviceId", "device-1");
+        params.put("limit", "10");
+
+        assertThat(SignatureUtil.buildSignatureString("GET", "/apps/app-id/push/channelSubscriptions", params),
+                is("GET\n/apps/app-id/push/channelSubscriptions\ndeviceid=device-1&limit=10"));
     }
 
 }

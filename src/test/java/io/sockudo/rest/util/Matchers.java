@@ -2,6 +2,7 @@ package io.sockudo.rest.util;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -78,6 +79,27 @@ public class Matchers {
     }
 
 
+    public static Matcher<HttpRequestBase> requestHeader(final String headerName, final String expectedValue) {
+        return new TypeSafeDiagnosingMatcher<HttpRequestBase>() {
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("HTTP request with header [" + headerName + "], value [" + expectedValue + "]");
+            }
+
+            @Override
+            public boolean matchesSafely(HttpRequestBase item, Description mismatchDescription) {
+                org.apache.http.Header h = item.getFirstHeader(headerName);
+                if (h == null) {
+                    mismatchDescription.appendText("header [" + headerName + "] was not present");
+                    return false;
+                }
+                String actual = h.getValue();
+                mismatchDescription.appendText("value was [" + actual + "]");
+                return expectedValue.equals(actual);
+            }
+        };
+    }
+
     public static Matcher<HttpPost> header(final String headerName, final String expectedValue) {
         return new TypeSafeDiagnosingMatcher<HttpPost>() {
             @Override
@@ -99,7 +121,35 @@ public class Matchers {
         };
     }
 
-    public static Matcher<HttpPost> fieldAndHeader(final String fieldName, final String expectedFieldValue, final String headerName, final String expectedHeaderValue) {
+    public static Matcher<HttpRequestBase> queryParam(final String name, final String expectedValue) {
+        return new TypeSafeDiagnosingMatcher<HttpRequestBase>() {
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("HTTP request with query param [" + name + "], value [" + expectedValue + "]");
+            }
+
+            @Override
+            public boolean matchesSafely(HttpRequestBase item, Description mismatchDescription) {
+                final String query = item.getURI().getQuery();
+                if (query == null) {
+                    mismatchDescription.appendText("query string was empty");
+                    return false;
+                }
+                final String[] pairs = query.split("&");
+                for (final String pair : pairs) {
+                    final String[] keyValue = pair.split("=", 2);
+                    if (keyValue.length == 2 && name.equals(keyValue[0])) {
+                        mismatchDescription.appendText("value was [" + keyValue[1] + "]");
+                        return expectedValue.equals(keyValue[1]);
+                    }
+                }
+                mismatchDescription.appendText("param [" + name + "] was not present");
+                return false;
+            }
+        };
+    }
+
+    public static Matcher<HttpPost> fieldAndHeader(final String fieldName, final Object expectedFieldValue, final String headerName, final String expectedHeaderValue) {
         return new TypeSafeDiagnosingMatcher<HttpPost>() {
             @Override
             public void describeTo(Description description) {
@@ -109,9 +159,8 @@ public class Matchers {
             @Override
             public boolean matchesSafely(HttpPost item, Description mismatchDescription) {
                 try {
-                    @SuppressWarnings("unchecked")
-                    String actualField = (String) new Gson().fromJson(retrieveBody(item), Map.class).get(fieldName);
-                    if (!expectedFieldValue.equals(actualField)) {
+                    final Object actualField = new Gson().fromJson(retrieveBody(item), Map.class).get(fieldName);
+                    if (!Objects.equals(expectedFieldValue, actualField)) {
                         mismatchDescription.appendText("field value was [" + actualField + "]");
                         return false;
                     }

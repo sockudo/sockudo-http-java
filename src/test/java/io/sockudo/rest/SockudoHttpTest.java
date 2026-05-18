@@ -60,6 +60,26 @@ public class SockudoHttpTest {
     }
 
     @Test
+    public void status201ReturnsOkAndBody() {
+        responseStatus = 201;
+        responseBody = "{\"deviceIdentityToken\":\"identity\"}";
+
+        Result result = p.httpCall(request);
+        assertThat(result.getStatus(), is(Status.SUCCESS));
+        assertThat(result.getMessage(), is(responseBody));
+    }
+
+    @Test
+    public void status202ReturnsOkAndBody() {
+        responseStatus = 202;
+        responseBody = "{\"publish_id\":\"pub_123\",\"status\":\"queued\"}";
+
+        Result result = p.httpCall(request);
+        assertThat(result.getStatus(), is(Status.SUCCESS));
+        assertThat(result.getMessage(), is(responseBody));
+    }
+
+    @Test
     public void status400ReturnsGenericErrorAndMessage() {
         responseStatus = 400;
         responseBody = "A lolcat got all up in ur request";

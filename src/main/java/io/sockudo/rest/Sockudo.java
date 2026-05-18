@@ -170,8 +170,22 @@ public class Sockudo extends SockudoAbstract<Result> implements AutoCloseable {
     }
 
     @Override
+    protected Result doGet(final URI uri, final Map<String, String> headers) {
+        final HttpGet request = new HttpGet(uri);
+        applyHeaders(request, headers);
+        return httpCall(request);
+    }
+
+    @Override
     protected Result doDelete(final URI uri) {
         return httpCall(new HttpDelete(uri));
+    }
+
+    @Override
+    protected Result doDelete(final URI uri, final Map<String, String> headers) {
+        final HttpDelete request = new HttpDelete(uri);
+        applyHeaders(request, headers);
+        return httpCall(request);
     }
 
     @Override
@@ -193,13 +207,18 @@ public class Sockudo extends SockudoAbstract<Result> implements AutoCloseable {
         final HttpPost request = new HttpPost(uri);
         request.setEntity(bodyEntity);
 
-        if (headers != null) {
-            for (final Map.Entry<String, String> header : headers.entrySet()) {
-                request.setHeader(header.getKey(), header.getValue());
-            }
-        }
+        applyHeaders(request, headers);
 
         return httpCall(request);
+    }
+
+    private void applyHeaders(final HttpRequestBase request, final Map<String, String> headers) {
+        if (headers == null) {
+            return;
+        }
+        for (final Map.Entry<String, String> header : headers.entrySet()) {
+            request.setHeader(header.getKey(), header.getValue());
+        }
     }
 
     private static final int MAX_RETRY_ATTEMPTS = 3;

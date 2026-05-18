@@ -53,6 +53,9 @@ public class Result {
         final Status status;
         switch (statusCode) {
         case 200:
+        case 201:
+        case 202:
+        case 204:
             status = SUCCESS;
             break;
         case 400:

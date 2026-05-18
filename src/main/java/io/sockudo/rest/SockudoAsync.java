@@ -140,12 +140,28 @@ public class SockudoAsync extends SockudoAbstract<CompletableFuture<Result>> imp
     }
 
     @Override
+    protected CompletableFuture<Result> doGet(final URI uri, final Map<String, String> headers) {
+        final RequestBuilder builder = new RequestBuilder(HttpConstants.Methods.GET)
+                .setUrl(uri.toString());
+        applyHeaders(builder, headers);
+        return httpCall(builder.build());
+    }
+
+    @Override
     protected CompletableFuture<Result> doDelete(final URI uri) {
         final Request request = new RequestBuilder(HttpConstants.Methods.DELETE)
             .setUrl(uri.toString())
             .build();
 
         return httpCall(request);
+    }
+
+    @Override
+    protected CompletableFuture<Result> doDelete(final URI uri, final Map<String, String> headers) {
+        final RequestBuilder builder = new RequestBuilder(HttpConstants.Methods.DELETE)
+                .setUrl(uri.toString());
+        applyHeaders(builder, headers);
+        return httpCall(builder.build());
     }
 
     @Override
@@ -166,13 +182,18 @@ public class SockudoAsync extends SockudoAbstract<CompletableFuture<Result>> imp
                 .setBody(body)
                 .addHeader("Content-Type", "application/json");
 
-        if (headers != null) {
-            for (final Map.Entry<String, String> header : headers.entrySet()) {
-                builder.addHeader(header.getKey(), header.getValue());
-            }
-        }
+        applyHeaders(builder, headers);
 
         return httpCall(builder.build());
+    }
+
+    private void applyHeaders(final RequestBuilder builder, final Map<String, String> headers) {
+        if (headers == null) {
+            return;
+        }
+        for (final Map.Entry<String, String> header : headers.entrySet()) {
+            builder.addHeader(header.getKey(), header.getValue());
+        }
     }
 
     private static final int MAX_RETRY_ATTEMPTS = 3;

@@ -28,6 +28,8 @@ import java.util.regex.Pattern;
  * See {@link Sockudo} for the synchronous implementation, {@link SockudoAsync} for the asynchronous implementation.
  */
 public abstract class SockudoAbstract<T> {
+    private static final String PUSH_ADMIN_CAPABILITY = "push-admin";
+    private static final String PUSH_SUBSCRIBE_CAPABILITY = "push-subscribe";
     protected static final Gson BODY_SERIALISER = new GsonBuilder()
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
             .disableHtmlEscaping()
@@ -506,10 +508,14 @@ public abstract class SockudoAbstract<T> {
      * @return a {@link Result} object encapsulating the success state and response to the request
      */
     public T get(final String path, final Map<String, String> parameters) {
+        return get(path, parameters, Collections.<String, String>emptyMap());
+    }
+
+    public T get(final String path, final Map<String, String> parameters, final Map<String, String> headers) {
         final String fullPath = "/apps/" + appId + path;
         final URI uri = SignatureUtil.uri("GET", scheme, host, fullPath, null, key, secret, parameters);
 
-        return doGet(uri);
+        return doGet(uri, headers);
     }
 
     /**
@@ -705,14 +711,26 @@ public abstract class SockudoAbstract<T> {
 
     protected abstract T doGet(final URI uri);
 
+    protected T doGet(final URI uri, final Map<String, String> headers) {
+        return doGet(uri);
+    }
+
     public T delete(final String path, final Map<String, String> parameters) {
+        return delete(path, parameters, Collections.<String, String>emptyMap());
+    }
+
+    public T delete(final String path, final Map<String, String> parameters, final Map<String, String> headers) {
         final String fullPath = "/apps/" + appId + path;
         final URI uri = SignatureUtil.uri("DELETE", scheme, host, fullPath, null, key, secret, parameters);
 
-        return doDelete(uri);
+        return doDelete(uri, headers);
     }
 
     protected abstract T doDelete(final URI uri);
+
+    protected T doDelete(final URI uri, final Map<String, String> headers) {
+        return doDelete(uri);
+    }
 
     /**
      * Make a generic HTTP call to the Sockudo API.
@@ -755,6 +773,239 @@ public abstract class SockudoAbstract<T> {
 
     protected T doPost(final URI uri, final String body, final Map<String, String> headers) {
         return doPost(uri, body);
+    }
+
+    public T activateDevice(final Map<String, Object> device) {
+        return activateDevice(device, false);
+    }
+
+    public T activateDevice(final Map<String, Object> device, final boolean rotateDeviceIdentityToken) {
+        Prerequisites.nonNull("device", device);
+
+        final Map<String, String> headers = pushHeaders(PUSH_ADMIN_CAPABILITY, null);
+        if (rotateDeviceIdentityToken) {
+            headers.put("X-Sockudo-Rotate-Device-Identity-Token", "true");
+        }
+        return post(pushPath("/deviceRegistrations"), BODY_SERIALISER.toJson(device), headers);
+    }
+
+    public T createDeviceActivation(final Map<String, Object> device) {
+        return activateDevice(device);
+    }
+
+    public T updateDeviceRegistration(final Map<String, Object> device, final String deviceIdentityToken) {
+        Prerequisites.nonNull("device", device);
+        Prerequisites.nonEmpty("deviceIdentityToken", deviceIdentityToken);
+        return post(
+                pushPath("/deviceRegistrations"),
+                BODY_SERIALISER.toJson(device),
+                pushHeaders(PUSH_SUBSCRIBE_CAPABILITY, deviceIdentityToken)
+        );
+    }
+
+    public T listDeviceRegistrations() {
+        return listDeviceRegistrations(Collections.<String, String>emptyMap());
+    }
+
+    public T listDeviceRegistrations(final Map<String, String> parameters) {
+        return get(
+                pushPath("/deviceRegistrations"),
+                parameters,
+                pushHeaders(PUSH_ADMIN_CAPABILITY, null)
+        );
+    }
+
+    public T getDeviceRegistration(final String deviceId) {
+        return getDeviceRegistration(deviceId, null);
+    }
+
+    public T getDeviceRegistration(final String deviceId, final String deviceIdentityToken) {
+        Prerequisites.nonEmpty("deviceId", deviceId);
+        final boolean subscribeScoped = deviceIdentityToken != null && !deviceIdentityToken.isEmpty();
+        return get(
+                pushPath("/deviceRegistrations/" + deviceId),
+                Collections.<String, String>emptyMap(),
+                pushHeaders(subscribeScoped ? PUSH_SUBSCRIBE_CAPABILITY : PUSH_ADMIN_CAPABILITY, deviceIdentityToken)
+        );
+    }
+
+    public T deleteDeviceRegistration(final String deviceId) {
+        return deleteDeviceRegistration(deviceId, null);
+    }
+
+    public T deleteDeviceRegistration(final String deviceId, final String deviceIdentityToken) {
+        Prerequisites.nonEmpty("deviceId", deviceId);
+        final boolean subscribeScoped = deviceIdentityToken != null && !deviceIdentityToken.isEmpty();
+        return delete(
+                pushPath("/deviceRegistrations/" + deviceId),
+                Collections.<String, String>emptyMap(),
+                pushHeaders(subscribeScoped ? PUSH_SUBSCRIBE_CAPABILITY : PUSH_ADMIN_CAPABILITY, deviceIdentityToken)
+        );
+    }
+
+    public T removeDeviceRegistrationsByClient(final String clientId) {
+        Prerequisites.nonEmpty("clientId", clientId);
+        return delete(
+                pushPath("/deviceRegistrations"),
+                Collections.singletonMap("clientId", clientId),
+                pushHeaders(PUSH_ADMIN_CAPABILITY, null)
+        );
+    }
+
+    public T upsertChannelPushSubscription(final Map<String, Object> subscription) {
+        return upsertChannelPushSubscription(subscription, null);
+    }
+
+    public T upsertChannelPushSubscription(final Map<String, Object> subscription, final String deviceIdentityToken) {
+        Prerequisites.nonNull("subscription", subscription);
+        final boolean subscribeScoped = deviceIdentityToken != null && !deviceIdentityToken.isEmpty();
+        return post(
+                pushPath("/channelSubscriptions"),
+                BODY_SERIALISER.toJson(subscription),
+                pushHeaders(subscribeScoped ? PUSH_SUBSCRIBE_CAPABILITY : PUSH_ADMIN_CAPABILITY, deviceIdentityToken)
+        );
+    }
+
+    public T listChannelPushSubscriptions() {
+        return listChannelPushSubscriptions(Collections.<String, String>emptyMap(), null);
+    }
+
+    public T listChannelPushSubscriptions(final Map<String, String> parameters) {
+        return listChannelPushSubscriptions(parameters, null);
+    }
+
+    public T listChannelPushSubscriptions(final Map<String, String> parameters, final String deviceIdentityToken) {
+        final boolean subscribeScoped = deviceIdentityToken != null && !deviceIdentityToken.isEmpty();
+        return get(
+                pushPath("/channelSubscriptions"),
+                parameters,
+                pushHeaders(subscribeScoped ? PUSH_SUBSCRIBE_CAPABILITY : PUSH_ADMIN_CAPABILITY, deviceIdentityToken)
+        );
+    }
+
+    public T deleteChannelPushSubscriptions(final Map<String, String> parameters) {
+        return deleteChannelPushSubscriptions(parameters, null);
+    }
+
+    public T deleteChannelPushSubscriptions(final Map<String, String> parameters, final String deviceIdentityToken) {
+        final boolean subscribeScoped = deviceIdentityToken != null && !deviceIdentityToken.isEmpty();
+        return delete(
+                pushPath("/channelSubscriptions"),
+                parameters,
+                pushHeaders(subscribeScoped ? PUSH_SUBSCRIBE_CAPABILITY : PUSH_ADMIN_CAPABILITY, deviceIdentityToken)
+        );
+    }
+
+    public T listChannelPushSubscriptionChannels() {
+        return listChannelPushSubscriptionChannels(Collections.<String, String>emptyMap());
+    }
+
+    public T listChannelPushSubscriptionChannels(final Map<String, String> parameters) {
+        return get(
+                pushPath("/channelSubscriptions/channels"),
+                parameters,
+                pushHeaders(PUSH_ADMIN_CAPABILITY, null)
+        );
+    }
+
+    public T listPushCredentials() {
+        return listPushCredentials(Collections.<String, String>emptyMap());
+    }
+
+    public T listPushCredentials(final Map<String, String> parameters) {
+        return get(
+                pushPath("/credentials"),
+                parameters,
+                pushHeaders(PUSH_ADMIN_CAPABILITY, null)
+        );
+    }
+
+    public T putPushCredential(final String provider, final Map<String, Object> credential) {
+        Prerequisites.nonEmpty("provider", provider);
+        Prerequisites.nonNull("credential", credential);
+        return post(
+                pushPath("/credentials/" + provider),
+                BODY_SERIALISER.toJson(credential),
+                pushHeaders(PUSH_ADMIN_CAPABILITY, null)
+        );
+    }
+
+    public T publishPush(final Map<String, Object> request) {
+        Prerequisites.nonNull("request", request);
+        final Map<String, Object> payload = new HashMap<String, Object>(request);
+        payload.put("sync", Boolean.FALSE);
+        return post(
+                pushPath("/publish"),
+                BODY_SERIALISER.toJson(payload),
+                pushHeaders(PUSH_ADMIN_CAPABILITY, null)
+        );
+    }
+
+    public T publishPushDirect(final Map<String, Object> request) {
+        return publishPush(request);
+    }
+
+    public T publishPushBatch(final List<Map<String, Object>> requests) {
+        Prerequisites.nonNull("requests", requests);
+        final List<Map<String, Object>> payload = new ArrayList<Map<String, Object>>(requests.size());
+        for (final Map<String, Object> request : requests) {
+            final Map<String, Object> item = new HashMap<String, Object>(request);
+            item.put("sync", Boolean.FALSE);
+            payload.add(item);
+        }
+        return post(
+                pushPath("/batch/publish"),
+                BODY_SERIALISER.toJson(payload),
+                pushHeaders(PUSH_ADMIN_CAPABILITY, null)
+        );
+    }
+
+    public T schedulePush(final Map<String, Object> request) {
+        Prerequisites.nonNull("request", request);
+        if (!request.containsKey("notBeforeMs")) {
+            throw new IllegalArgumentException("scheduled push requires notBeforeMs");
+        }
+        return publishPush(request);
+    }
+
+    public T getPublishStatus(final String publishId) {
+        Prerequisites.nonEmpty("publishId", publishId);
+        return get(
+                pushPath("/publish/" + publishId + "/status"),
+                Collections.<String, String>emptyMap(),
+                pushHeaders(PUSH_ADMIN_CAPABILITY, null)
+        );
+    }
+
+    public T cancelScheduledPush(final String publishId) {
+        Prerequisites.nonEmpty("publishId", publishId);
+        return delete(
+                pushPath("/scheduled/" + publishId),
+                Collections.<String, String>emptyMap(),
+                pushHeaders(PUSH_ADMIN_CAPABILITY, null)
+        );
+    }
+
+    public T postPushDeliveryStatus(final Map<String, Object> event) {
+        Prerequisites.nonNull("event", event);
+        return post(
+                pushPath("/deliveryStatus"),
+                BODY_SERIALISER.toJson(event),
+                pushHeaders(PUSH_ADMIN_CAPABILITY, null)
+        );
+    }
+
+    private Map<String, String> pushHeaders(final String capability, final String deviceIdentityToken) {
+        final Map<String, String> headers = new HashMap<String, String>();
+        headers.put("X-Sockudo-Push-Capability", capability);
+        if (deviceIdentityToken != null && !deviceIdentityToken.isEmpty()) {
+            headers.put("X-Sockudo-Device-Identity-Token", deviceIdentityToken);
+        }
+        return headers;
+    }
+
+    private String pushPath(final String suffix) {
+        return "/push" + suffix;
     }
 
     /**

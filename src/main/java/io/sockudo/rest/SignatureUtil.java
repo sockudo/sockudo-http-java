@@ -8,6 +8,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -105,7 +106,12 @@ public class SignatureUtil {
             .append(path)
             .append('\n');
 
-        final String[] keys = queryParams.keySet().toArray(new String[0]);
+        final Map<String, String> canonicalParams = new HashMap<String, String>();
+        for (final Entry<String, String> e : queryParams.entrySet()) {
+            canonicalParams.put(e.getKey().toLowerCase(Locale.ROOT), e.getValue());
+        }
+
+        final String[] keys = canonicalParams.keySet().toArray(new String[0]);
         Arrays.sort(keys);
 
         boolean first = true;
@@ -115,7 +121,7 @@ public class SignatureUtil {
 
             sb.append(key)
                 .append('=')
-                .append(queryParams.get(key));
+                .append(canonicalParams.get(key));
         }
 
         return sb.toString();

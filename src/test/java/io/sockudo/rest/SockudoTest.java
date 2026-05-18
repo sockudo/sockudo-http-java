@@ -23,6 +23,7 @@ import java.util.*;
 
 import static io.sockudo.rest.util.Matchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -257,6 +258,46 @@ public class SockudoTest {
         }});
 
         p.getChannelHistory("history-room", Collections.singletonMap("direction", "newest_first"));
+    }
+
+    @Test
+    public void listDeviceRegistrationsUsesCursorPagination() throws Exception {
+        final Map<String, String> parameters = new HashMap<String, String>();
+        parameters.put("limit", "10");
+        parameters.put("cursor", "c1");
+
+        context.checking(new Expectations() {{
+            oneOf(httpClient).execute(with(allOf(
+                    path("/apps/" + APP_ID + "/push/deviceRegistrations"),
+                    queryParam("limit", "10"),
+                    queryParam("cursor", "c1"),
+                    requestHeader("X-Sockudo-Push-Capability", "push-admin")
+            )));
+        }});
+
+        p.listDeviceRegistrations(parameters);
+    }
+
+    @Test
+    public void publishPushUsesAsyncDefaultAndAdminCapability() throws Exception {
+        final Map<String, Object> payload = new HashMap<String, Object>();
+        payload.put("recipients", Collections.singletonList(Collections.<String, Object>singletonMap("channel", "orders")));
+        payload.put("payload", Collections.<String, Object>singletonMap("title", "Order"));
+        payload.put("providerOverrides", Collections.singletonList(Collections.<String, Object>singletonMap("provider", "fcm")));
+
+        context.checking(new Expectations() {{
+            oneOf(httpClient).execute(with(allOf(
+                    path("/apps/" + APP_ID + "/push/publish"),
+                    fieldAndHeader("sync", false, "X-Sockudo-Push-Capability", "push-admin")
+            )));
+        }});
+
+        p.publishPush(payload);
+    }
+
+    @Test
+    public void schedulePushRequiresNotBeforeMs() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> p.schedulePush(Collections.<String, Object>emptyMap()));
     }
 
     @Test
